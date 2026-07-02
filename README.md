@@ -28,7 +28,7 @@ The main objective of this project is to learn how a frontend application can co
 2. Add your `SUPABASE_URL` and `SUPABASE_ANON_KEY` in your `index.html` file before running the project.
 
 ## Project Screenshot
-![TaskFlow App](screenshot.png)
+![TaskFlow App](screenshot.jpg)
 
 ## Author
 **Asima Majeed**
