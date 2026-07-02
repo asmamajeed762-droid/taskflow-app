@@ -4,41 +4,43 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Tasks</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: sans-serif; max-width: 500px; margin: 50px auto; padding: 20px; background: #111; color: #eee; }
-    input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #333; font-size: 16px; }
-    input { background: #222; color: #eee; }
-    button { background: #3ECF8E; color: #111; border: none; font-weight: bold; }
-    #tasks { margin-top: 20px; }
-    .task { background: #222; padding: 10px; border-radius: 6px; margin-bottom: 8px; }
+    body { background: #0f0f0f; color: #fff; font-family: sans-serif; padding: 20px; max-width: 500px; margin: auto; }
+    h1 { font-size: 28px; }
+    input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #333; background: #1a1a1a; color: #fff; font-size: 16px; margin-bottom: 12px; box-sizing: border-box; }
+    button { width: 100%; padding: 14px; border-radius: 12px; border: none; background: #22c55e; color: #000; font-weight: bold; font-size: 16px; cursor: pointer; }
+    button:active { background: #16a34a; }
+    #list { margin-top: 20px; }
+    .task { background: #1a1a1a; padding: 12px; border-radius: 10px; margin-bottom: 8px; }
   </style>
 </head>
 <body>
   <h1>✅ My Tasks</h1>
-  <input id="taskInput" placeholder="Naya task likho..." />
+  <input id="taskInput" type="text" placeholder="My first task">
   <button id="addBtn">Add Task</button>
-  <div id="tasks"></div>
+  <div id="list"></div>
+
   <script>
-    const SUPABASE_URL = "https://ptamypdlsqnwgpmrkpiw.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_zXal1P_CWm6Ar5UptpNWxg_HpStpjP5";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const taskInput = document.getElementById('taskInput');
-    const addBtn = document.getElementById('addBtn');
-    const tasksDiv = document.getElementById('tasks');
-    async function loadTasks() {
-      let { data } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
-      tasksDiv.innerHTML = data.map(t => `<div class="task">${t.task}</div>`).join('');
+    const input = document.getElementById('taskInput');
+    const btn = document.getElementById('addBtn');
+    const list = document.getElementById('list');
+
+    function addTask() {
+      const text = input.value.trim();
+      if (text === "") return;
+      
+      const div = document.createElement('div');
+      div.className = 'task';
+      div.textContent = text;
+      list.appendChild(div);
+      
+      input.value = "";
     }
-    addBtn.onclick = async () => {
-      const task = taskInput.value.trim();
-      if (!task) return;
-      await supabase.from('tasks').insert([{ task }]);
-      taskInput.value = '';
-      loadTasks();
-    };
-    loadTasks();
+
+    btn.addEventListener('click', addTask);
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') addTask();
+    });
   </script>
 </body>
 </html>
-Is ko 
