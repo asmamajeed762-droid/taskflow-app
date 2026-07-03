@@ -1,46 +1,157 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Tasks</title>
-  <style>
-    body { background: #0f0f0f; color: #fff; font-family: sans-serif; padding: 20px; max-width: 500px; margin: auto; }
-    h1 { font-size: 28px; }
-    input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #333; background: #1a1a1a; color: #fff; font-size: 16px; margin-bottom: 12px; box-sizing: border-box; }
-    button { width: 100%; padding: 14px; border-radius: 12px; border: none; background: #22c55e; color: #000; font-weight: bold; font-size: 16px; cursor: pointer; }
-    button:active { background: #16a34a; }
-    #list { margin-top: 20px; }
-    .task { background: #1a1a1a; padding: 12px; border-radius: 10px; margin-bottom: 8px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskFlow - Plan. Do. Achieve.</title>
+<style>
+  :root{--p:#6366f1;--g:#10b981;--bg:#f4f6f8;--card:#fff;--text:#1f2937;--border:#e5e7eb}
+  *{box-sizing:border-box}
+  body{font-family:'Segoe UI',sans-serif;background:var(--bg);margin:0;padding:16px;color:var(--text)}
+  .container{max-width:600px;margin:24px auto;background:var(--card);padding:24px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.06)}
+  header{text-align:center;margin-bottom:20px}
+  h1{color:var(--p);margin:0;font-size:28px;font-weight:800}
+  .tagline{color:#6b7280;margin:4px 0 0 0;font-size:14px}
+  .input-wrap{display:flex;gap:8px;margin-bottom:16px}
+  input[type=text]{flex:1;padding:12px 14px;border-radius:10px;border:1px solid var(--border);font-size:16px;outline:none;transition:0.2s}
+  input[type=text]:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(99,102,241,0.1)}
+  button{padding:12px 16px;border-radius:10px;border:none;background:var(--p);color:#fff;font-weight:700;cursor:pointer;transition:0.2s}
+  button:hover{transform:translateY(-1px);opacity:0.95}
+  .filters{display:flex;gap:8px;margin-bottom:16px}
+  .filters button{background:#f3f4f6;color:var(--text);font-weight:600}
+  .filters button.active{background:var(--p);color:#fff}
+  .task{background:var(--card);padding:14px;border-radius:12px;margin:8px 0;border:1px solid var(--border);display:flex;align-items:center;gap:12px;animation:fadeIn 0.3s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .task:hover{box-shadow:0 2px 8px rgba(0,0,0,0.04)}
+  .task.completed{opacity:0.7}
+  .task.completed .task-text{text-decoration:line-through;color:#9ca3af}
+  .task input[type=checkbox]{width:20px;height:20px;accent-color:var(--g);cursor:pointer}
+  .task-text{flex:1;word-break:break-word;font-size:16px}
+  .task-actions{display:flex;gap:6px}
+  .task-actions button{padding:8px 12px;font-size:14px;border-radius:8px}
+  .edit-btn{background:#f59e0b}
+  .del-btn{background:#ef4444}
+  .stats{display:flex;justify-content:space-between;color:#6b7280;font-size:14px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+  .empty{color:#6b7280;text-align:center;padding:48px 16px}
+  .empty h3{margin:0 0 8px 0;font-size:18px}
+  @media(max-width:500px){
+    .container{padding:16px;margin:12px auto}
+    .input-wrap{flex-direction:column}
+    button{width:100%}
+    .filters button{flex:1}
+  }
+</style>
 </head>
 <body>
-  <h1>✅ My Tasks</h1>
-  <input id="taskInput" type="text" placeholder="My first task">
-  <button id="addBtn">Add Task</button>
-  <div id="list"></div>
+  <div class="container">
+    <header>
+      <h1>🚀 TaskFlow</h1>
+      <p class="tagline">Plan. Do. Achieve.</p>
+    </header>
 
-  <script>
-    const input = document.getElementById('taskInput');
-    const btn = document.getElementById('addBtn');
-    const list = document.getElementById('list');
+    <div class="input-wrap">
+      <input id="taskInput" type="text" placeholder="Naya task likho aur Enter dabao...">
+      <button onclick="addTask()">Add Task</button>
+    </div>
 
-    function addTask() {
-      const text = input.value.trim();
-      if (text === "") return;
-      
-      const div = document.createElement('div');
-      div.className = 'task';
-      div.textContent = text;
-      list.appendChild(div);
-      
-      input.value = "";
-    }
+    <div class="filters">
+      <button class="filter-btn active" onclick="setFilter('all')">All</button>
+      <button class="filter-btn" onclick="setFilter('pending')">Pending</button>
+      <button class="filter-btn" onclick="setFilter('done')">Completed</button>
+    </div>
 
-    btn.addEventListener('click', addTask);
-    input.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') addTask();
-    });
-  </script>
+    <div id="taskList"></div>
+
+    <div class="stats" id="stats"></div>
+  </div>
+
+<script>
+let tasks = JSON.parse(localStorage.getItem('taskflow_v2')) || [];
+let filter = 'all';
+
+const input = document.getElementById('taskInput');
+const list = document.getElementById('taskList');
+const statsEl = document.getElementById('stats');
+
+function save(){ 
+  localStorage.setItem('taskflow_v2', JSON.stringify(tasks)); 
+  render(); 
+}
+
+function addTask(){
+  const text = input.value.trim();
+  if(!text) return alert('⚠️ Task khali nahi ho sakta');
+  tasks.unshift({id: Date.now(), text: text, completed: false});
+  input.value = '';
+  save();
+}
+
+function delTask(id){
+  if(confirm('Task delete karna hai?')){
+    tasks = tasks.filter(t => t.id != id);
+    save();
+  }
+}
+
+function toggleTask(id){
+  tasks = tasks.map(t => t.id == id ? {...t, completed: !t.completed} : t);
+  save();
+}
+
+function editTask(id){
+  const t = tasks.find(t => t.id == id);
+  const newText = prompt('Task edit karo:', t.text);
+  if(newText && newText.trim()){
+    t.text = newText.trim();
+    save();
+  }
+}
+
+function setFilter(f){
+  filter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  render();
+}
+
+function render(){
+  const filtered = tasks.filter(t => 
+    filter === 'all' || 
+    (filter === 'done' && t.completed) || 
+    (filter === 'pending' && !t.completed)
+  );
+
+  if(filtered.length === 0){
+    list.innerHTML = `
+      <div class="empty">
+        <h3>📝 Abhi koi task nahi</h3>
+        <p>Upar task likh ke shuru karo!</p>
+      </div>`;
+  } else {
+    list.innerHTML = filtered.map(t => `
+      <div class="task ${t.completed ? 'completed' : ''}">
+        <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTask(${t.id})">
+        <span class="task-text">${t.text}</span>
+        <div class="task-actions">
+          <button class="edit-btn" onclick="editTask(${t.id})">✏️</button>
+          <button class="del-btn" onclick="delTask(${t.id})">🗑️</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  const total = tasks.length;
+  const done = tasks.filter(t => t.completed).length;
+  const pending = total - done;
+  statsEl.innerHTML = `<span>Total: ${total}</span><span>Pending: ${pending}</span><span>Done: ${done}</span>`;
+}
+
+input.addEventListener('keypress', e => {
+  if(e.key === 'Enter') addTask();
+});
+
+// Pehli baar load
+render();
+</script>
 </body>
 </html>
